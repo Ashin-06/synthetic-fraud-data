@@ -66,6 +66,8 @@ streamlit run app.py                                         # generate, inspect
 
 The studio lets you upload your own table (or use the demo data), pick a synthesizer and privacy budget, and see the scorecard, distribution plots, fraud-type mix and privacy detail. You can then download the CSV.
 
+**Model files are pickles.** `model.joblib` can execute code when loaded, so only `sample` from model files you created yourself or received over a trusted channel.
+
 **Your own data.** Match the schema in `synthfraud/source.py` (or edit `SCHEMA`), and set the public bounds in `BOUNDS` and category domains in `CATEGORIES` from product knowledge. Do not derive them from the private table itself, or the DP guarantee no longer covers them.
 
 ## Choosing ε
