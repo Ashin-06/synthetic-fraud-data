@@ -1,0 +1,317 @@
+[
+  {
+    "model": "gaussian_copula",
+    "epsilon": Infinity,
+    "fidelity": {
+      "column_distance_mean": 0.0045185185185185215,
+      "column_distance": {
+        "customer_age": 0.003444444444444472,
+        "tenure_months": 0.005333333333333412,
+        "amount": 0.008055555555555538,
+        "hour": 0.006166666666666654,
+        "device_age_days": 0.006000000000000005,
+        "distance_km": 0.005888888888888888,
+        "txn_count_24h": 0.0040000000000000036,
+        "avg_amount_30d": 0.007611111111111124,
+        "income_band": 0.005111111111111108,
+        "city_tier": 0.002333333333333326,
+        "channel": 0.0033888888888888857,
+        "mcc": 0.007388888888888882,
+        "is_international": 0.0006111111111111144,
+        "fraud_type": 0.0016666666666666301,
+        "is_fraud": 0.0007777777777777731
+      },
+      "correlation_error": 0.04089845194162343,
+      "discriminator_auc": 0.717247
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.02649452877097974,
+      "tstr_ratio": 0.026541884565961297
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.4321522116661072,
+      "dcr_holdout_median": 1.313620924949646,
+      "share_closer_than_holdout_p5": 0.03666666666666667,
+      "near_copies": 0,
+      "membership_auc": 0.50016159375,
+      "membership_auc_fraud_rows": 0.5478080385942277
+    },
+    "score": {
+      "fidelity": 77.8,
+      "utility": 2.7,
+      "privacy": 76.1
+    },
+    "seconds": 5.1
+  },
+  {
+    "model": "conditional_copula",
+    "epsilon": Infinity,
+    "fidelity": {
+      "column_distance_mean": 0.01094074074074074,
+      "column_distance": {
+        "customer_age": 0.03233333333333334,
+        "tenure_months": 0.008166666666666666,
+        "amount": 0.009444444444444478,
+        "hour": 0.006000000000000005,
+        "device_age_days": 0.007888888888888834,
+        "distance_km": 0.01883333333333334,
+        "txn_count_24h": 0.05261111111111111,
+        "avg_amount_30d": 0.008888888888888946,
+        "income_band": 0.0030555555555555544,
+        "city_tier": 0.003999999999999976,
+        "channel": 0.002722222222222244,
+        "mcc": 0.007722222222222217,
+        "is_international": 0.0007777777777777713,
+        "fraud_type": 0.0011111111111110992,
+        "is_fraud": 0.0005555555555555435
+      },
+      "correlation_error": 0.011413318764621176,
+      "discriminator_auc": 0.8396455312500001
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.9943730146662374,
+      "tstr_ratio": 0.9961503372608292
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.3353115320205688,
+      "dcr_holdout_median": 1.237617015838623,
+      "share_closer_than_holdout_p5": 0.03844444444444445,
+      "near_copies": 0,
+      "membership_auc": 0.49741024999999994,
+      "membership_auc_fraud_rows": 0.5651417833001431
+    },
+    "score": {
+      "fidelity": 64.9,
+      "utility": 99.6,
+      "privacy": 67.4
+    },
+    "seconds": 5.2
+  },
+  {
+    "model": "conditional_copula (DP eps=8.0)",
+    "epsilon": 7.999999999999999,
+    "fidelity": {
+      "column_distance_mean": 0.01195925925925926,
+      "column_distance": {
+        "customer_age": 0.03361111111111111,
+        "tenure_months": 0.01011111111111107,
+        "amount": 0.006888888888888944,
+        "hour": 0.006000000000000005,
+        "device_age_days": 0.011555555555555541,
+        "distance_km": 0.02511111111111114,
+        "txn_count_24h": 0.04883333333333334,
+        "avg_amount_30d": 0.009666666666666712,
+        "income_band": 0.00538888888888886,
+        "city_tier": 0.0019444444444444292,
+        "channel": 0.006000000000000012,
+        "mcc": 0.011111111111111127,
+        "is_international": 0.0003333333333333157,
+        "fraud_type": 0.0016666666666666583,
+        "is_fraud": 0.0011666666666666579
+      },
+      "correlation_error": 0.020517186451229113,
+      "discriminator_auc": 0.838308015625
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.9356534443563088,
+      "tstr_ratio": 0.9373258127561294
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.3427258133888245,
+      "dcr_holdout_median": 1.236773431301117,
+      "share_closer_than_holdout_p5": 0.03911111111111111,
+      "near_copies": 0,
+      "membership_auc": 0.49979471875,
+      "membership_auc_fraud_rows": 0.5609906599725127
+    },
+    "score": {
+      "fidelity": 65.0,
+      "utility": 93.7,
+      "privacy": 69.5
+    },
+    "seconds": 5.3
+  },
+  {
+    "model": "conditional_copula (DP eps=2.0)",
+    "epsilon": 1.9999999999999998,
+    "fidelity": {
+      "column_distance_mean": 0.013511111111111107,
+      "column_distance": {
+        "customer_age": 0.03244444444444444,
+        "tenure_months": 0.020333333333333314,
+        "amount": 0.013111111111111129,
+        "hour": 0.006666666666666654,
+        "device_age_days": 0.008944444444444435,
+        "distance_km": 0.0247222222222222,
+        "txn_count_24h": 0.05538888888888893,
+        "avg_amount_30d": 0.015277777777777835,
+        "income_band": 0.007277777777777765,
+        "city_tier": 0.001388888888888884,
+        "channel": 0.005944444444444426,
+        "mcc": 0.008166666666666676,
+        "is_international": 0.0007222222222222005,
+        "fraud_type": 0.0013888888888888588,
+        "is_fraud": 0.0008888888888888592
+      },
+      "correlation_error": 0.026890030564467714,
+      "discriminator_auc": 0.8523055625
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.6538713323164422,
+      "tstr_ratio": 0.6550400489607409
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.3412636518478394,
+      "dcr_holdout_median": 1.2312046885490417,
+      "share_closer_than_holdout_p5": 0.03983333333333333,
+      "near_copies": 0,
+      "membership_auc": 0.49971584375,
+      "membership_auc_fraud_rows": 0.5666563823521162
+    },
+    "score": {
+      "fidelity": 63.4,
+      "utility": 65.5,
+      "privacy": 66.7
+    },
+    "seconds": 5.7
+  },
+  {
+    "model": "conditional_copula (DP eps=1.0)",
+    "epsilon": 0.9999999999999998,
+    "fidelity": {
+      "column_distance_mean": 0.016744444444444458,
+      "column_distance": {
+        "customer_age": 0.03294444444444444,
+        "tenure_months": 0.029277777777777847,
+        "amount": 0.0160555555555556,
+        "hour": 0.00833333333333336,
+        "device_age_days": 0.02188888888888889,
+        "distance_km": 0.022611111111111137,
+        "txn_count_24h": 0.060111111111111115,
+        "avg_amount_30d": 0.02005555555555556,
+        "income_band": 0.011166666666666686,
+        "city_tier": 0.00650000000000002,
+        "channel": 0.005222222222222218,
+        "mcc": 0.012333333333333321,
+        "is_international": 0.0025555555555555436,
+        "fraud_type": 0.0013333333333333279,
+        "is_fraud": 0.0007777777777777731
+      },
+      "correlation_error": 0.029593379622429982,
+      "discriminator_auc": 0.858541875
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.4592799925773196,
+      "tstr_ratio": 0.4601009005223382
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.3556401133537292,
+      "dcr_holdout_median": 1.2280523777008057,
+      "share_closer_than_holdout_p5": 0.03811111111111111,
+      "near_copies": 0,
+      "membership_auc": 0.50032953125,
+      "membership_auc_fraud_rows": 0.5462653914116624
+    },
+    "score": {
+      "fidelity": 62.5,
+      "utility": 46.0,
+      "privacy": 76.9
+    },
+    "seconds": 8.4
+  },
+  {
+    "model": "tvae",
+    "epsilon": Infinity,
+    "fidelity": {
+      "column_distance_mean": 0.01509999999999999,
+      "column_distance": {
+        "customer_age": 0.013722222222222191,
+        "tenure_months": 0.025500000000000023,
+        "amount": 0.01483333333333331,
+        "hour": 0.024388888888888904,
+        "device_age_days": 0.027611111111111086,
+        "distance_km": 0.01622222222222222,
+        "txn_count_24h": 0.028444444444444383,
+        "avg_amount_30d": 0.0067777777777777715,
+        "income_band": 0.013666666666666681,
+        "city_tier": 0.019722222222222224,
+        "channel": 0.011388888888888879,
+        "mcc": 0.02161111111111111,
+        "is_international": 0.0009444444444444301,
+        "fraud_type": 0.0011111111111110992,
+        "is_fraud": 0.0005555555555555435
+      },
+      "correlation_error": 0.007605568177817868,
+      "discriminator_auc": 0.7763059218749999
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.9827628143948047,
+      "tstr_ratio": 0.9845193851478182
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.3040916919708252,
+      "dcr_holdout_median": 1.2984594106674194,
+      "share_closer_than_holdout_p5": 0.04938888888888889,
+      "near_copies": 0,
+      "membership_auc": 0.50768440625,
+      "membership_auc_fraud_rows": 0.6256135528567022
+    },
+    "score": {
+      "fidelity": 70.9,
+      "utility": 98.5,
+      "privacy": 37.2
+    },
+    "seconds": 5.7
+  },
+  {
+    "model": "tvae (DP eps=8.0)",
+    "epsilon": 7.999999999481645,
+    "fidelity": {
+      "column_distance_mean": 0.015340740740740736,
+      "column_distance": {
+        "customer_age": 0.01705555555555556,
+        "tenure_months": 0.022333333333333316,
+        "amount": 0.01577777777777778,
+        "hour": 0.01677777777777778,
+        "device_age_days": 0.010777777777777775,
+        "distance_km": 0.013222222222222219,
+        "txn_count_24h": 0.06633333333333336,
+        "avg_amount_30d": 0.010444444444444367,
+        "income_band": 0.013277777777777756,
+        "city_tier": 0.01416666666666666,
+        "channel": 0.016166666666666676,
+        "mcc": 0.010611111111111113,
+        "is_international": 0.001500000000000029,
+        "fraud_type": 0.0011111111111110992,
+        "is_fraud": 0.0005555555555555435
+      },
+      "correlation_error": 0.02569825103513466,
+      "discriminator_auc": 0.89580421875
+    },
+    "utility": {
+      "train_real": 0.9982158088713005,
+      "train_synthetic": 0.022847812408679825,
+      "tstr_ratio": 0.022888650135198953
+    },
+    "privacy": {
+      "dcr_synthetic_median": 1.4841837286949158,
+      "dcr_holdout_median": 1.30864679813385,
+      "share_closer_than_holdout_p5": 0.027833333333333335,
+      "near_copies": 0,
+      "membership_auc": 0.5017800625,
+      "membership_auc_fraud_rows": 0.5528006058396208
+    },
+    "score": {
+      "fidelity": 58.9,
+      "utility": 2.3,
+      "privacy": 73.6
+    },
+    "seconds": 6.3
+  }
+]
