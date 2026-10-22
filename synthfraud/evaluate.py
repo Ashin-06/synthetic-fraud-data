@@ -30,8 +30,10 @@ def _encode(frames: list[pd.DataFrame], schema: Schema) -> list[np.ndarray]:
         if c in num:
             num[c] = np.log1p(num[c].clip(lower=0))
     num = (num - num.median()) / (num.quantile(0.75) - num.quantile(0.25)).replace(0, 1)
-    cat = pd.get_dummies(allc[list(schema.categorical)].astype(str)).astype(float)
-    m = pd.concat([num, cat], axis=1).to_numpy(np.float32)
+    parts = [num]
+    if schema.categorical:  # a table can be all numbers once the label columns are set aside
+        parts.append(pd.get_dummies(allc[list(schema.categorical)].astype(str)).astype(float))
+    m = pd.concat(parts, axis=1).to_numpy(np.float32)
     sizes = np.cumsum([0] + [len(f) for f in frames])
     return [m[sizes[i]:sizes[i + 1]] for i in range(len(frames))]
 
