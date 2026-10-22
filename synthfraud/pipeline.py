@@ -11,7 +11,7 @@ import pandas as pd
 from plotly.subplots import make_subplots
 
 from .evaluate import fidelity, privacy, scorecard, utility
-from .source import SCHEMA
+from .source import SCHEMA, Schema
 
 
 def split(df: pd.DataFrame, seed: int = 0):
@@ -21,10 +21,10 @@ def split(df: pd.DataFrame, seed: int = 0):
     return df.iloc[idx[:a]].reset_index(drop=True), df.iloc[idx[a:b]].reset_index(drop=True), df.iloc[idx[b:]].reset_index(drop=True)
 
 
-def assess(model, train, holdout, test, n: int | None = None, seed: int = 0, log=print) -> dict:
+def assess(model, train, holdout, test, n: int | None = None, seed: int = 0, log=print, schema: Schema = SCHEMA) -> dict:
     t0 = time.time()
     syn = model.sample(n or len(train), seed=seed)
-    fid, uti, pri = fidelity(train, syn), utility(train, syn, test), privacy(train, holdout, syn)
+    fid, uti, pri = fidelity(train, syn, schema), utility(train, syn, test, schema), privacy(train, holdout, syn, schema)
     eps = getattr(model, "spent_epsilon", math.inf)
     res = {"model": model.name + (f" (DP eps={eps:.1f})" if math.isfinite(eps) else ""), "epsilon": eps,
            "fidelity": fid, "utility": uti, "privacy": pri, "score": scorecard(fid, uti, pri), "seconds": round(time.time() - t0, 1)}
@@ -34,7 +34,8 @@ def assess(model, train, holdout, test, n: int | None = None, seed: int = 0, log
     return res, syn
 
 
-def html_report(results: list[dict], real: pd.DataFrame, samples: dict[str, pd.DataFrame], path: str | Path) -> None:
+def html_report(results: list[dict], real: pd.DataFrame, samples: dict[str, pd.DataFrame], path: str | Path,
+                schema: Schema = SCHEMA) -> None:
     fig = make_subplots(rows=2, cols=2, subplot_titles=("Scorecard", "Amount distribution (log)", "Fraud-type mix", "Membership inference AUC"))
     names = [r["model"] for r in results]
     for k, color in (("fidelity", "#2a9d8f"), ("utility", "#e9c46a"), ("privacy", "#e76f51")):
@@ -42,10 +43,10 @@ def html_report(results: list[dict], real: pd.DataFrame, samples: dict[str, pd.D
     fig.add_histogram(x=np.log10(real["amount"] + 1), name="real", opacity=0.55, histnorm="probability", row=1, col=2)
     for name, s in samples.items():
         fig.add_histogram(x=np.log10(s["amount"] + 1), name=name, opacity=0.55, histnorm="probability", row=1, col=2)
-    mix = real[SCHEMA.condition].value_counts(normalize=True)
+    mix = real[schema.condition].value_counts(normalize=True)
     fig.add_bar(x=mix.index, y=mix.values, name="real mix", row=2, col=1)
     for name, s in samples.items():
-        m = s[SCHEMA.condition].value_counts(normalize=True).reindex(mix.index).fillna(0)
+        m = s[schema.condition].value_counts(normalize=True).reindex(mix.index).fillna(0)
         fig.add_bar(x=m.index, y=m.values, name=f"{name} mix", row=2, col=1)
     fig.update_yaxes(type="log", row=2, col=1)
     fig.add_bar(x=names, y=[r["privacy"]["membership_auc"] for r in results], name="all rows", row=2, col=2)
@@ -64,16 +65,17 @@ def html_report(results: list[dict], real: pd.DataFrame, samples: dict[str, pd.D
                           f"{table}{fig.to_html(full_html=False, include_plotlyjs='cdn')}", encoding="utf-8")
 
 
-def compare(models: list, df: pd.DataFrame, out: str = "results", seed: int = 0, log=print) -> list[dict]:
+def compare(models: list, df: pd.DataFrame, out: str = "results", seed: int = 0, log=print, schema: Schema = SCHEMA,
+            n: int | None = None) -> list[dict]:
     train, holdout, test = split(df, seed)
     Path(out).mkdir(parents=True, exist_ok=True)
     results, samples = [], {}
     for m in models:
         log(f"fitting {m.name} ...")
         m.fit(train, log=log) if m.name == "tvae" else m.fit(train)
-        r, syn = assess(m, train, holdout, test, seed=seed, log=log)
+        r, syn = assess(m, train, holdout, test, n=n, seed=seed, log=log, schema=schema)
         results.append(r)
         samples[r["model"]] = syn
-    html_report(results, train, samples, Path(out) / "report.html")
+    html_report(results, train, samples, Path(out) / "report.html", schema)
     (Path(out) / "results.json").write_text(json.dumps(results, indent=2, default=float))
     return results

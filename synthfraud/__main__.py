@@ -1,6 +1,7 @@
 """Command line.
 
     python -m synthfraud benchmark                     # every synthesizer, scorecard + report.html -> results/
+    python -m synthfraud benchmark --ulb creditcard.pq --out results/real_ulb   # the same on real card data
     python -m synthfraud fit --model ccopula --epsilon 2 --out model.joblib [--data private.csv]
     python -m synthfraud sample model.joblib -n 50000 --out synthetic.csv [--fraud-type upi_scam]
     python -m synthfraud evaluate --real private.csv --synthetic synthetic.csv
@@ -16,7 +17,7 @@ import pandas as pd
 
 from .models import ConditionalCopula, GaussianCopula, TVAE
 from .pipeline import compare, split
-from .source import generate, load_csv
+from .source import ULB_BOUNDS, ULB_CATEGORIES, ULB_SCHEMA, generate, load_csv, load_ulb
 
 
 def build(name: str, eps: float | None, epochs: int):
@@ -36,6 +37,8 @@ def main(argv=None):
     b.add_argument("--rows", type=int, default=30_000)
     b.add_argument("--epochs", type=int, default=150)
     b.add_argument("--out", default="results")
+    b.add_argument("--ulb", help="real ULB card-fraud data (OpenML #1597 parquet or Kaggle creditcard.csv)")
+    b.add_argument("--sample", type=int, help="synthetic rows to draw per model (default: as many as the training split)")
     f = sub.add_parser("fit")
     f.add_argument("--model", choices=["copula", "ccopula", "tvae"], default="ccopula")
     f.add_argument("--epsilon", type=float, help="differential privacy budget (omit for no DP)")
@@ -52,7 +55,13 @@ def main(argv=None):
     e.add_argument("--synthetic", required=True)
     a = ap.parse_args(argv)
 
-    if a.cmd == "benchmark":
+    if a.cmd == "benchmark" and a.ulb:
+        s, kw = ULB_SCHEMA, {"bounds": ULB_BOUNDS, "categories": ULB_CATEGORIES}
+        models = [GaussianCopula(s), ConditionalCopula(s, **kw), ConditionalCopula(s, dp_epsilon=8, **kw), ConditionalCopula(s, dp_epsilon=2, **kw),
+                  TVAE(s, epochs=a.epochs), TVAE(s, epochs=max(a.epochs // 4, 10), dp_epsilon=8, lr=2e-3)]
+        compare(models, load_ulb(a.ulb), a.out, schema=s, n=a.sample)
+        print(f"report: {a.out}/report.html")
+    elif a.cmd == "benchmark":
         df = generate(a.rows)
         models = [GaussianCopula(), ConditionalCopula(), ConditionalCopula(dp_epsilon=8), ConditionalCopula(dp_epsilon=2),
                   ConditionalCopula(dp_epsilon=1), TVAE(epochs=a.epochs), TVAE(epochs=max(a.epochs // 4, 10), dp_epsilon=8, lr=2e-3)]

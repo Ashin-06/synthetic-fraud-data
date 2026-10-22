@@ -261,16 +261,19 @@ class ConditionalCopula:
     """
 
     def __init__(self, schema: Schema = SCHEMA, dp_epsilon: float | None = None, delta: float = 1e-5, bins: int = 48,
-                 min_rows: int = 25, seed: int = 0):
+                 min_rows: int = 25, seed: int = 0, bounds: dict | None = None, categories: dict | None = None):
+        from .source import BOUNDS, CATEGORIES
+
         self.schema, self.dp_epsilon, self.delta, self.bins, self.min_rows, self.seed = schema, dp_epsilon, delta, bins, min_rows, seed
+        self.bounds, self.categories = bounds or BOUNDS, categories or CATEGORIES
         self.name = "conditional_copula"
         self.spent_epsilon = math.inf
 
     # ---- binning on public bounds
     def _edges(self, c):
-        from .source import BOUNDS
-
-        lo, hi, scale = BOUNDS[c]
+        lo, hi, scale = self.bounds[c]
+        if scale == "asinh":  # fine bins near zero, wide ones in both tails
+            return np.sinh(np.linspace(np.arcsinh(lo), np.arcsinh(hi), self.bins + 1))
         if scale == "log":
             return np.geomspace(lo, hi, self.bins + 1)
         if scale == "log1p":
@@ -278,8 +281,6 @@ class ConditionalCopula:
         return np.linspace(lo, hi + 1e-9, self.bins + 1)
 
     def fit(self, df: pd.DataFrame) -> "ConditionalCopula":
-        from .source import CATEGORIES
-
         rng = np.random.default_rng(self.seed)
         cols = self.schema.columns
         k = len(cols)
@@ -294,7 +295,7 @@ class ConditionalCopula:
             self.spent_epsilon = _zcdp_to_eps(rho, self.delta)
         self.classes = {}
         cond = df[self.schema.condition].astype(str)
-        for cls in (CATEGORIES[self.schema.condition] if dp else sorted(cond.unique())):
+        for cls in (self.categories[self.schema.condition] if dp else sorted(cond.unique())):
             part = df[cond == cls]
             n_noisy = len(part) + (rng.normal(0, sig_n) if dp else 0.0)
             if n_noisy < (self.min_rows if not dp else 5):
@@ -305,7 +306,7 @@ class ConditionalCopula:
                     edges = self._edges(c)
                     h = np.histogram(np.clip(part[c].to_numpy(float), edges[0], edges[-1]), edges)[0].astype(float)
                 else:
-                    cats = CATEGORIES[c] if dp else sorted(df[c].astype(str).unique())
+                    cats = self.categories[c] if dp else sorted(df[c].astype(str).unique())
                     h = part[c].astype(str).value_counts().reindex(cats).fillna(0).to_numpy(float)
                     edges = np.array(cats)
                 if dp:

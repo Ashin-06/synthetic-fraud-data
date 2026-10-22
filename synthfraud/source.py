@@ -95,6 +95,28 @@ def load_csv(path: str, schema: Schema = SCHEMA) -> pd.DataFrame:
     return df[schema.columns]
 
 
+# Real data: the ULB / Worldline card-fraud table (OpenML #1597, 284,807 European card
+# transactions over two days, 492 frauds). V1-V28 are PCA components released in place of the
+# confidential raw fields. It has no fraud types, so the condition is simply fraud / none.
+ULB_SCHEMA = Schema(continuous=("time", "amount", *(f"V{i}" for i in range(1, 29))), categorical=("fraud_type", "is_fraud"))
+# Bounds fixed in advance rather than read from the data: the table covers 48 hours, card
+# amounts stay under 30,000 EUR, and PCA scores of standardised inputs are kept within +/-120
+# on an asinh scale so most bins sit near zero where the mass is.
+ULB_BOUNDS = {"time": (0, 172_800, "linear"), "amount": (0.01, 30_000, "log"),
+              **{f"V{i}": (-120, 120, "asinh") for i in range(1, 29)}}
+ULB_CATEGORIES = {"fraud_type": ["none", "fraud"], "is_fraud": ["0", "1"]}
+
+
+def load_ulb(path: str) -> pd.DataFrame:
+    """OpenML #1597 parquet (or the Kaggle creditcard.csv) in this project's schema."""
+    df = pd.read_parquet(path) if str(path).endswith((".pq", ".parquet")) else pd.read_csv(path)
+    df = df.rename(columns={"Time": "time", "Amount": "amount"})
+    fraud = df.pop("Class").astype(int).to_numpy() == 1
+    df["fraud_type"] = np.where(fraud, "fraud", "none")
+    df["is_fraud"] = np.where(fraud, "1", "0")
+    return df[ULB_SCHEMA.columns]
+
+
 # Public domain bounds (from product knowledge, not from the data). Differentially
 # private synthesizers bin values inside these ranges so the bins themselves leak nothing.
 BOUNDS = {

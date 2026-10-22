@@ -51,12 +51,40 @@ What the numbers say:
 
 At about 0.55 the fraud-row membership AUC is at the noise floor for a few hundred fraud rows. Look at the *gap* between models, not the absolute value. Open `results/report.html` for the full plots.
 
+### On real card transactions
+
+`python -m synthfraud benchmark --ulb creditcard.pq --out results/real_ulb` runs every synthesizer on the [ULB / Worldline card-fraud data](https://api.openml.org/d/1597): 284,807 real transactions, 492 frauds. Results are in `results/real_ulb/results.json`; the plot report is regenerated locally rather than committed, because it holds 10 MB of histogram data.
+
+Two setup notes:
+- **There are no fraud types**, so the copula conditions only on fraud against legitimate.
+- **The DP bins are fixed in advance, not read from the data.** That means 48 hours of time, amounts up to €30,000, and the PCA components within ±120 on an asinh scale.
+
+The setup is otherwise the same 60/20/20 split, with 60,000 synthetic rows drawn per model.
+
+| Synthesizer | Formal privacy | Discriminator AUC ↓ | Fraud PR-AUC, trained on synthetic (real = 0.766) | Membership AUC, all rows / fraud rows ↓ |
+|---|---|---|---|---|
+| Gaussian copula | none | 0.999 | **0.002** | 0.504 / 0.522 |
+| Conditional copula | none | 0.997 | 0.679 | 0.504 / 0.535 |
+| Conditional copula | **ε = 8** | 0.996 | **0.750** | 0.502 / 0.524 |
+| Conditional copula | **ε = 2** | 0.997 | 0.675 | 0.506 / 0.519 |
+| TVAE | none | 0.993 | 0.697 | 0.504 / 0.531 |
+| TVAE (DP-SGD) | ε = 8 | 0.999 | 0.002 | 0.505 / 0.521 |
+
+What carries over from the benchmark:
+- **The ranking holds on real data.** A single global copula throws the fraud away. Conditioning on the label keeps most of it, and the DP conditional copula still trains a useful fraud model: ε = 8 matched the non-private one here, a difference within the noise of about 295 training frauds.
+- **DP-SGD on the neural model fails again** at this fraud rate.
+
+What is different:
+- **Every model is easy to tell apart from real rows** (discriminator AUC ≥ 0.99). Thirty continuous, heavy-tailed PCA components are much harder to reproduce exactly than the mixed table above. The synthetic data is useful for training fraud models, not a stand-in for inspecting individual records.
+- **No model leaked membership measurably** (all AUCs within 0.04 of 0.5).
+
 ## Run it
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q                                          # 8 tests
+python -m pytest -q                                          # 10 tests
 python -m synthfraud benchmark                               # all synthesizers -> results/report.html
+python -m synthfraud benchmark --ulb creditcard.pq --out results/real_ulb   # the same on real card data
 python -m synthfraud fit --model ccopula --epsilon 2 --data private.csv --out model.joblib
 python -m synthfraud sample model.joblib -n 100000 --out synthetic.csv
 python -m synthfraud sample model.joblib -n 5000 --fraud-type upi_scam --out upi_scams.csv
@@ -80,7 +108,7 @@ The studio lets you upload your own table (or use the demo data), pick a synthes
 
 ```
 synthfraud/
-  source.py     schema, demo data generator, public bounds
+  source.py     schema, demo data generator, public bounds, ULB real-data schema and loader
   transform.py  mode-specific normalisation (Bayesian GMM) + one-hot, reversible
   models.py     Gaussian copula, conditional copula (+DP), TVAE (+DP-SGD), privacy accounting
   evaluate.py   fidelity, utility (TSTR), privacy (DCR, membership inference)
