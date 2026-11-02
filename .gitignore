@@ -5,3 +5,5 @@ __pycache__/
 *.joblib
 synthetic.csv
 results/real_ulb/report.html
+.coverage
+audit.txt
