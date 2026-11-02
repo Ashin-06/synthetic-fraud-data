@@ -5,11 +5,17 @@
     python -m synthfraud fit --model ccopula --epsilon 2 --out model.joblib [--data private.csv]
     python -m synthfraud sample model.joblib -n 50000 --out synthetic.csv [--fraud-type upi_scam]
     python -m synthfraud evaluate --real private.csv --synthetic synthetic.csv
+    python -m synthfraud serve       # sampling API (settings: SYNTHFRAUD_* environment variables)
+    python -m synthfraud migrate     # apply database migrations and exit
+
+With SYNTHFRAUD_MODEL_KEY set, `fit` also writes <model>.sig, which the API needs before it loads a model.
 """
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import os
 import sys
 
 import joblib
@@ -53,7 +59,33 @@ def main(argv=None):
     e = sub.add_parser("evaluate")
     e.add_argument("--real", required=True)
     e.add_argument("--synthetic", required=True)
+    sv = sub.add_parser("serve", help="sampling API")
+    sv.add_argument("--host", help="default SYNTHFRAUD_HOST or 127.0.0.1; any other address needs API keys")
+    sv.add_argument("--port", type=int, help="default SYNTHFRAUD_PORT or 8009")
+    sub.add_parser("migrate", help="apply database migrations to SYNTHFRAUD_DATABASE_URL")
     a = ap.parse_args(argv)
+
+    if a.cmd in ("serve", "migrate"):
+        from . import db, ops
+
+        for name, val in (("HOST", getattr(a, "host", None)), ("PORT", getattr(a, "port", None))):
+            if val is not None:
+                os.environ[f"SYNTHFRAUD_{name}"] = str(val)
+        try:
+            settings = ops.load_settings()  # fail here, before uvicorn, with a readable message
+        except ops.ConfigError as e:
+            sys.exit(f"configuration error: {e}")
+        if a.cmd == "migrate":
+            print(*(db.migrate(db.engine(settings.database_url)) or ["up to date"]), sep="\n")
+            return
+        import uvicorn
+
+        ops.setup_logging(settings.log_level)
+        try:
+            uvicorn.run("synthfraud.api:app", host=settings.host, port=settings.port, log_config=None, access_log=False)
+        except ops.ConfigError as e:  # raised while importing the app: no model directory, no signed models
+            sys.exit(f"configuration error: {e}")
+        return
 
     if a.cmd == "benchmark" and a.ulb:
         s, kw = ULB_SCHEMA, {"bounds": ULB_BOUNDS, "categories": ULB_CATEGORIES}
@@ -72,6 +104,10 @@ def main(argv=None):
         m = build(a.model, a.epsilon, a.epochs)
         (m.fit(df, log=print) if a.model == "tvae" else m.fit(df))
         joblib.dump(m, a.out)
+        if os.environ.get("SYNTHFRAUD_MODEL_KEY"):
+            from .signing import sign
+
+            print(f"signed: {sign(a.out, base64.b64decode(os.environ['SYNTHFRAUD_MODEL_KEY']))}")
         eps = getattr(m, "spent_epsilon", float("inf"))
         print(f"saved {a.out}" + (f"  (differential privacy: epsilon={eps:.2f}, delta={m.delta})" if eps != float("inf") else "  (no formal privacy guarantee)"))
     elif a.cmd == "sample":

@@ -57,11 +57,11 @@ with tab_gen:
         c[1].metric("Utility", sc["utility"], f"fraud PR-AUC {uti['train_synthetic']:.3f} vs {uti['train_real']:.3f} real", delta_color="off")
         c[2].metric("Privacy", sc["privacy"], f"membership AUC {pri['membership_auc']:.3f}", delta_color="off")
         c[3].metric("Formal guarantee", "none" if not math.isfinite(spent) else f"ε = {spent:.2f}", "δ = 1e-5" if math.isfinite(spent) else None, delta_color="off")
-        l, r = st.columns(2)
+        left, r = st.columns(2)
         fig = go.Figure([go.Histogram(x=train["amount"].clip(upper=train["amount"].quantile(0.99)), name="real", opacity=0.6, histnorm="probability"),
                          go.Histogram(x=syn["amount"].clip(upper=train["amount"].quantile(0.99)), name="synthetic", opacity=0.6, histnorm="probability")])
         fig.update_layout(barmode="overlay", title="Amount", height=320)
-        l.plotly_chart(fig, width="stretch")
+        left.plotly_chart(fig, width="stretch")
         mix_r = train["fraud_type"].value_counts(normalize=True).reindex(FRAUD_TYPES).fillna(0)
         mix_s = syn["fraud_type"].value_counts(normalize=True).reindex(FRAUD_TYPES).fillna(0)
         fig = go.Figure([go.Bar(x=FRAUD_TYPES, y=mix_r, name="real"), go.Bar(x=FRAUD_TYPES, y=mix_s, name="synthetic")])
