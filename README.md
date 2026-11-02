@@ -31,7 +31,27 @@ streamlit run app.py                                         # generate, inspect
 
 In the Streamlit studio you can upload a table or use the demo data, pick a synthesizer and privacy budget, check the scorecard and plots, and download the CSV.
 
-Model files are pickles, which can run code when loaded. Only load model files you created yourself or received over a trusted channel.
+Model files are pickles, which can run code when loaded. With `SYNTHFRAUD_MODEL_KEY` set, `fit` also writes an HMAC signature (`model.joblib.sig`), and the API refuses any model file without a valid one.
+
+## Sampling API
+
+`python -m synthfraud serve` (or the container image, `docker build -t synthetic-fraud-data .`, see [docs/runbook.md](docs/runbook.md)) serves rows from signed models in `SYNTHFRAUD_MODEL_DIR`. Private data never goes through the API.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /v1/models` | loaded models and their privacy budget |
+| `POST /v1/sample` | `{"model": ..., "n": 5000, "fraud_type": "upi_scam", "format": "csv"}`, up to 100,000 rows |
+| `GET /v1/generations` | who drew how many rows from which model |
+| `GET /healthz`, `/readyz`, `/metrics` | health, readiness and Prometheus metrics |
+
+API keys carry a role: `consumer` samples, `viewer` reads, `monitor` reads metrics. Create one with `python -m synthfraud.ops keygen`.
+
+| Variable | Purpose |
+|---|---|
+| `SYNTHFRAUD_ENV=production` | refuse to start without hashed API keys, a database, the model key and a signed model |
+| `SYNTHFRAUD_MODEL_DIR`, `SYNTHFRAUD_MODEL_KEY` | signed models and the key that verifies them |
+| `SYNTHFRAUD_API_KEYS` / `SYNTHFRAUD_KEYS_FILE` | hashed API keys with roles |
+| `SYNTHFRAUD_DATABASE_URL` | the generation log: `sqlite:///...` or `postgresql://...` |
 
 ## Using your own data
 
@@ -63,6 +83,9 @@ synthfraud/
   models.py     copulas, TVAE and privacy accounting
   evaluate.py   fidelity, utility and privacy scores
   pipeline.py   data split, scoring and HTML report
+  signing.py    model file signatures
+  api.py        sampling API with a generation log
+  ops.py        settings, API keys, limits, logs, metrics
 app.py          Streamlit studio
 ```
 
@@ -71,4 +94,10 @@ app.py          Streamlit studio
 - Formal privacy guarantees only apply to the differentially private models.
 - On the real dataset every model is easy to tell apart from real rows, so the synthetic data suits training fraud models rather than inspecting individual records.
 - DP-SGD on the neural model doesn't work for classes this rare at this data size.
-- There is no API service yet; it runs as a CLI and a dashboard.
+- The code has not had an independent security review.
+
+See [SECURITY.md](SECURITY.md), [docs/threat-model.md](docs/threat-model.md) and [docs/model-card.md](docs/model-card.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
